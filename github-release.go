@@ -106,6 +106,7 @@ func main() {
 	var compareURLs []string
 
 	for index, project := range userInput.projects {
+		log.Println("--")
 		log.Printf("%2d : Starting Release %s for %s with Tag Version %s on branch %s with fallback branch %s and possible support branch %s", index+1, userInput.releaseName, project, userInput.tag, userInput.source, userInput.fallbackBranch, userInput.supportBranchName)
 
 		projectAPIBaseURL := fmt.Sprintf("%s/%s/%s", apiBaseURL, userInput.user, project)
@@ -116,6 +117,7 @@ func main() {
 		log.Printf("Selected Branch %s to create tag %s", targetBranch, userInput.tag)
 		compareURL := createRelease(client, userInput, targetBranch, project, projectAPIBaseURL)
 		compareURLs = append(compareURLs, compareURL+"\n")
+		log.Println("--")
 	}
 
 	log.Println("Release Done, Following are the release compare URLs")
@@ -271,7 +273,7 @@ func doGet(client *http.Client, url string) (*http.Response, error) {
 		return nil, err
 	}
 
-	log.Printf("Response %v", res)
+	//log.Printf("Response %v", res)
 	return res, nil
 }
 
@@ -319,7 +321,7 @@ func createRelease(client *http.Client, userInput userInputs, targetBranch strin
 		log.Fatalf("Create release Failed with status, %d : %s", res.StatusCode, http.StatusText(res.StatusCode))
 	}
 
-	log.Printf("Release Tag Created : %v", res)
+	log.Printf("Release Tag Created")
 	return releaseCompareBody
 }
 
