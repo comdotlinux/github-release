@@ -36,12 +36,12 @@ type userInputs struct {
 
 /* {
 	"ref": "refs/tags/4.29.1",
-	"node_id": "MDM6UmVmMTIwMzAxOTM2OjQuMjkuMQ==",
-	"url": "https://api.github.com/repos/idnowgmbh/de.idnow.ai/git/refs/tags/4.29.1",
+	"node_id": "",
+	"url": "https://api.github.com/repos/comdotlinux/java-design-patterns/git/refs/tags/4.29.1",
 	"object": {
-	  "sha": "1e6757d5d09730b84d1a29eff891c206457d1049",
+	  "sha": "1b323c26943a32bc83832cc78d7ceb36e4f504e8",
 	  "type": "commit",
-	  "url": "https://api.github.com/repos/idnowgmbh/de.idnow.ai/git/commits/1e6757d5d09730b84d1a29eff891c206457d1049"
+	  "url": "https://api.github.com/repos/comdotlinux/java-design-patterns/git/commits/1b323c26943a32bc83832cc78d7ceb36e4f504e8"
 	}
 } */
 type referenceResponse struct {
@@ -316,16 +316,16 @@ func createRelease(client *http.Client, userInput userInputs, targetBranch strin
 }
 
 func getReleaseName(userInput userInputs) string {
+	releaseName := userInput.releaseName
 	if isEmpty(userInput.releaseName) {
 		log.Printf("Since the release name is unavailable, getting a random release name using %s", dockerNamesURL)
-		return getRandomReleaseName()
-		if isEmpty(userInput.releaseName) {
-			releaseName := "Release of " + userInput.tag
+		releaseName = getRandomReleaseName()
+		if isEmpty(releaseName) {
+			releaseName = "Release of " + userInput.tag
 			log.Printf("Since getting release name was not possible, using %s as release name", releaseName)
-			return releaseName
 		}
 	}
-	return userInput.releaseName
+	return releaseName
 }
 
 func getRandomReleaseName() string {
