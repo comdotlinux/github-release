@@ -72,7 +72,7 @@ type createBranchBody struct {
 const environmentTokenKey = "OAUTH_TOKEN"
 const dockerNamesURL = "https://frightanic.com/goodies_content/docker-names.php"
 const apiBaseURL = "https://api.github.com/repos"
-const githubURL = "https://github.com/repos/%s/%s/compare/%s...%s"
+const githubURL = "https://github.com/%s/%s/compare/%s...%s"
 
 func main() {
 	if token, present := os.LookupEnv(environmentTokenKey); !present || token == "" {
