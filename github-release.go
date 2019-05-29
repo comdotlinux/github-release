@@ -103,6 +103,8 @@ func main() {
 		Timeout: time.Duration(time.Second * time.Duration(userInput.timeout)),
 	}
 
+	var compareURLs []string
+
 	for index, project := range userInput.projects {
 		log.Printf("%2d : Starting Release %s for %s with Tag Version %s on branch %s with fallback branch %s and possible support branch %s", index+1, userInput.releaseName, project, userInput.tag, userInput.source, userInput.fallbackBranch, userInput.supportBranchName)
 
@@ -112,8 +114,13 @@ func main() {
 			log.Fatalf("Could not get the Target Branch %v", err)
 		}
 		log.Printf("Selected Branch %s to create tag %s", targetBranch, userInput.tag)
-		createRelease(client, userInput, targetBranch, project, projectAPIBaseURL)
+		compareURL := createRelease(client, userInput, targetBranch, project, projectAPIBaseURL)
+		compareURLs = append(compareURLs, compareURL+"\n")
 	}
+
+	log.Println("Release Done, Following are the release compare URLs")
+	log.Println(compareURLs)
+	log.Println("--")
 }
 
 func usage() {
@@ -273,7 +280,7 @@ func addAuthAndAcceptHeader(request *http.Request) {
 	request.Header.Add(http.CanonicalHeaderKey("Accept"), "application/vnd.github.v3+json")
 }
 
-func createRelease(client *http.Client, userInput userInputs, targetBranch string, project string, projectAPIBaseURL string) {
+func createRelease(client *http.Client, userInput userInputs, targetBranch string, project string, projectAPIBaseURL string) string {
 	previousComparePoint := targetBranch
 	if !isEmpty(userInput.previousTag) {
 		previousComparePoint = userInput.previousTag
@@ -313,6 +320,7 @@ func createRelease(client *http.Client, userInput userInputs, targetBranch strin
 	}
 
 	log.Printf("Release Tag Created : %v", res)
+	return releaseCompareBody
 }
 
 func getReleaseName(userInput userInputs) string {
