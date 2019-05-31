@@ -12,3 +12,8 @@
 *.out
 github-release
 bin/dlv
+/.idea/github-release.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/sbt.xml
+/.idea/vcs.xml

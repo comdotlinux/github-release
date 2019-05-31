@@ -119,21 +119,18 @@ func main() {
 		compareURLs = append(compareURLs, compareURL+"\n")
 		log.Println("--")
 	}
-
-	log.Println("Release Done, Following are the release compare URLs")
-	log.Println(compareURLs)
-	log.Println("--")
+	printComparisonUrls(compareURLs)
 }
 
 func usage() {
 	executableName := os.Args[0]
-	fmt.Fprintf(flag.CommandLine.Output(), "\n%s is an opinionated implementation of some Github APIs that can be used to create release tags for multiple projects\n", executableName)
-	fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source master -tag v0.0.2 -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
-	fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source support/v0.0.x -tag v0.0.3 -fallback-branch master -previous-tag v0.0.1 -release-name Duke -pre-release=false java-design-patterns TasteOfJavaEE7", executableName)
-	fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source v.0.0.1 -tag v0.0.2-RC.1 -support-branch-name support/v0.0.x -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
-	fmt.Fprintf(flag.CommandLine.Output(), "\nWhen -source is a TAG -support-branch-name is mandatory. \n")
-	fmt.Fprintf(flag.CommandLine.Output(), "An environment variable with the name %s is mandatory for all actions!\nSee https://developer.github.com/v3/#oauth2-token-sent-in-a-header to get one.\n\n", environmentTokenKey)
-	fmt.Fprintf(flag.CommandLine.Output(), "Below are the possible parameters:\n")
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\n%s is an opinionated implementation of some Github APIs that can be used to create release tags for multiple projects\n", executableName)
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source master -tag v0.0.2 -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source support/v0.0.x -tag v0.0.3 -fallback-branch master -previous-tag v0.0.1 -release-name Duke -pre-release=false java-design-patterns TasteOfJavaEE7", executableName)
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source v.0.0.1 -tag v0.0.2-RC.1 -support-branch-name support/v0.0.x -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nWhen -source is a TAG -support-branch-name is mandatory. \n")
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "An environment variable with the name %s is mandatory for all actions!\nSee https://developer.github.com/v3/#oauth2-token-sent-in-a-header to get one.\n\n", environmentTokenKey)
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Below are the possible parameters:\n")
 	flag.PrintDefaults()
 	os.Exit(3)
 }
@@ -297,7 +294,7 @@ func createRelease(client *http.Client, userInput userInputs, targetBranch strin
 	}
 
 	b, _ := json.MarshalIndent(releaseRequest, "", "    ")
-	os.Stdout.Write(b)
+	_, _ = os.Stdout.Write(b)
 
 	url := fmt.Sprintf("%s/releases", projectAPIBaseURL)
 	log.Printf("Calling URL %s to create Release %v", url, releaseRequest)
@@ -380,12 +377,24 @@ func inputValidaton(userInput userInputs) {
 	}
 
 	if len(errors) != 0 {
-		fmt.Fprintln(flag.CommandLine.Output(), "")
+		_, _ = fmt.Fprintln(flag.CommandLine.Output(), "")
 		for index, err := range errors {
-			fmt.Fprintf(flag.CommandLine.Output(), "%2d : %s\n", index+1, err)
+			_, _ = fmt.Fprintf(flag.CommandLine.Output(), "%2d : %s\n", index+1, err)
 		}
-		fmt.Fprintln(flag.CommandLine.Output(), "")
+		_, _ = fmt.Fprintln(flag.CommandLine.Output(), "")
 		flag.Usage()
 	}
 
+}
+
+func printComparisonUrls(compareURLs []string) {
+
+	output := "Release Done, Following are the release compare URLs\n"
+
+	for i, u := range compareURLs {
+		output += fmt.Sprintf("%2d : %s\n", i+1, u)
+	}
+
+	output += "--"
+	log.Println(output)
 }
