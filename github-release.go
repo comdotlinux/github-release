@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -106,18 +106,18 @@ func main() {
 	var compareURLs []string
 
 	for index, project := range userInput.projects {
-		log.Println("--")
-		log.Printf("%2d : Starting Release %s for %s with Tag Version %s on branch %s with fallback branch %s and possible support branch %s", index+1, userInput.releaseName, project, userInput.tag, userInput.source, userInput.fallbackBranch, userInput.supportBranchName)
+		log.Infof("--")
+		log.Infof("%2d : Starting Release %s for %s with Tag Version %s on branch %s with fallback branch %s and possible support branch %s", index+1, userInput.releaseName, project, userInput.tag, userInput.source, userInput.fallbackBranch, userInput.supportBranchName)
 
 		projectAPIBaseURL := fmt.Sprintf("%s/%s/%s", apiBaseURL, userInput.user, project)
 		targetBranch, err := checkBranch(client, userInput, project, projectAPIBaseURL)
 		if err != nil {
 			log.Fatalf("Could not get the Target Branch %v", err)
 		}
-		log.Printf("Selected Branch %s to create tag %s", targetBranch, userInput.tag)
+		log.Infof("Selected Branch %s to create tag %s", targetBranch, userInput.tag)
 		compareURL := createRelease(client, userInput, targetBranch, project, projectAPIBaseURL)
 		compareURLs = append(compareURLs, compareURL+"\n")
-		log.Println("--")
+		log.Infof("--\n")
 	}
 	printComparisonUrls(compareURLs)
 }
@@ -143,12 +143,12 @@ func checkBranch(client *http.Client, userInput userInputs, project string, proj
 	}
 
 	if statusSuccess(res.StatusCode) {
-		log.Printf("Branch %s looks good, will be selected. Response : %v", userInput.source, http.StatusText(res.StatusCode))
+		log.Infof("Branch %s looks good, will be selected. Response : %v", userInput.source, http.StatusText(res.StatusCode))
 		return userInput.source, nil
 	}
 
 	if res.StatusCode == http.StatusNotFound {
-		log.Printf("Checking if source %s is a TAG", userInput.source)
+		log.Infof("Checking if source %s is a TAG", userInput.source)
 		url = fmt.Sprintf("%s/releases/tags/%s", projectAPIBaseURL, userInput.source)
 		res, err := doGet(client, url)
 		if err != nil {
@@ -160,7 +160,7 @@ func checkBranch(client *http.Client, userInput userInputs, project string, proj
 			if userInput.supportBranchName == "" {
 				log.Fatalf("If Source is a tag, name of support branch to create from this is necessary!")
 			}
-			log.Printf("Since %s is a Tag, Creating support branch %s", userInput.source, userInput.supportBranchName)
+			log.Infof("Since %s is a Tag, Creating support branch %s", userInput.source, userInput.supportBranchName)
 
 			url = fmt.Sprintf("%s/git/refs/tags/%s", projectAPIBaseURL, userInput.source)
 			res, err := doGet(client, url)
@@ -222,7 +222,7 @@ func checkBranch(client *http.Client, userInput userInputs, project string, proj
 						log.Fatalf("Could not read response for tag info to get sha commit %v", err)
 					}
 
-					log.Printf("Created Branch with Details : %v", branchReference)
+					log.Infof("Created Branch with Details : %v", branchReference)
 
 					branchNameArray := strings.SplitN(branchReference.Ref, "/", 3)
 					if len(branchNameArray) == 3 {
@@ -230,10 +230,10 @@ func checkBranch(client *http.Client, userInput userInputs, project string, proj
 					}
 					return branchReference.Ref, nil
 				}
-				log.Printf("POST call to create branch completed with response %v", res)
+				log.Warnf("POST call to create branch completed with response %v", res)
 			}
 		} else {
-			log.Printf("Use fallback branch since %s is neither a branch nor a Tag", userInput.source)
+			log.Infof("Use fallback branch since %s is neither a branch nor a Tag", userInput.source)
 			url := fmt.Sprintf("%s/branches/%s", projectAPIBaseURL, userInput.fallbackBranch)
 			res, err := doGet(client, url)
 			if err != nil {
@@ -241,13 +241,13 @@ func checkBranch(client *http.Client, userInput userInputs, project string, proj
 			}
 
 			if statusSuccess(res.StatusCode) {
-				log.Printf("Branch %s looks good, will be selected. Response : %v", userInput.fallbackBranch, http.StatusText(res.StatusCode))
+				log.Infof("Branch %s looks good, will be selected. Response : %v", userInput.fallbackBranch, http.StatusText(res.StatusCode))
 				return userInput.fallbackBranch, nil
 			}
 		}
 	}
 
-	log.Println("The source branch parameter and the fallback cannot be used to create release, so using master")
+	log.Warnf("The source branch parameter and the fallback cannot be used to create release, so using master")
 	return "master", nil
 }
 
@@ -257,7 +257,7 @@ func statusSuccess(statusCode int) bool {
 }
 
 func doGet(client *http.Client, url string) (*http.Response, error) {
-	log.Printf("Calling URL %s", url)
+	log.Infof("Calling URL %s", url)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -270,7 +270,7 @@ func doGet(client *http.Client, url string) (*http.Response, error) {
 		return nil, err
 	}
 
-	//log.Printf("Response %v", res)
+	log.Debugf("Response for %s : %v", url, res)
 	return res, nil
 }
 
@@ -373,7 +373,7 @@ func inputValidaton(userInput userInputs) {
 	}
 
 	if len(userInput.projects) == 0 {
-		errors = append(errors, "Atleast provide one project, otherwise where do we create the tag?")
+		errors = append(errors, "At least provide one project, otherwise where do we create the tag?")
 	}
 
 	if len(errors) != 0 {
@@ -396,5 +396,5 @@ func printComparisonUrls(compareURLs []string) {
 	}
 
 	output += "--"
-	log.Println(output)
+	log.Infof(output)
 }
