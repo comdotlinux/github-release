@@ -293,8 +293,10 @@ func createRelease(client *http.Client, userInput userInputs, targetBranch strin
 		Body:         releaseCompareBody,
 	}
 
+	log.Infoln("Release request Object.")
 	b, _ := json.MarshalIndent(releaseRequest, "", "    ")
 	_, _ = os.Stdout.Write(b)
+	log.Infoln("--")
 
 	url := fmt.Sprintf("%s/releases", projectAPIBaseURL)
 	log.Printf("Calling URL %s to create Release %v", url, releaseRequest)
@@ -396,5 +398,5 @@ func printComparisonUrls(compareURLs []string) {
 	}
 
 	output += "--"
-	log.Infof(output)
+	fmt.Printf(output)
 }
