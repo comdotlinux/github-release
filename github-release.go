@@ -127,7 +127,7 @@ func usage() {
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\n%s is an opinionated implementation of some Github APIs that can be used to create release tags for multiple projects\n", executableName)
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source master -tag v0.0.2 -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source support/v0.0.x -tag v0.0.3 -fallback-branch master -previous-tag v0.0.1 -release-name Duke -pre-release=false java-design-patterns TasteOfJavaEE7", executableName)
-	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source v.0.0.1 -tag v0.0.2-RC.1 -support-branch-name support/v0.0.x -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source v0.0.1 -tag v0.0.2-RC.1 -support-branch-name support/v0.0.x -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nWhen -source is a TAG -support-branch-name is mandatory. \n")
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "An environment variable with the name %s is mandatory for all actions!\nSee https://developer.github.com/v3/#oauth2-token-sent-in-a-header to get one.\n\n", environmentTokenKey)
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Below are the possible parameters:\n")
@@ -247,7 +247,7 @@ func checkBranch(client *http.Client, userInput userInputs, project string, proj
 		}
 	}
 
-	log.Warnf("The source branch parameter and the fallback cannot be used to create release, so using master")
+	log.Warnf("The source branch parameter and the fallback cannot be used to create release for %s, so using master", project)
 	return "master", nil
 }
 
