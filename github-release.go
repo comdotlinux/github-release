@@ -393,11 +393,11 @@ func inputValidaton(userInput userInputs) {
 	}
 
 	if len(errors) != 0 {
-		_, _ = fmt.Fprintln(flag.CommandLine.Output(), "")
+		_, _ = fmt.Fprintln(flag.CommandLine.Output(), " ")
 		for index, err := range errors {
 			_, _ = fmt.Fprintf(flag.CommandLine.Output(), "%2d : %s\n", index+1, err)
 		}
-		_, _ = fmt.Fprintln(flag.CommandLine.Output(), "")
+		_, _ = fmt.Fprintln(flag.CommandLine.Output(), " ")
 		flag.Usage()
 	}
 
