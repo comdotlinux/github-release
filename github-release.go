@@ -32,6 +32,7 @@ type userInputs struct {
 	fallbackBranch    string
 	timeout           int
 	supportBranchName string
+	extraBody         string
 }
 
 /* {
@@ -70,6 +71,7 @@ type createBranchBody struct {
 }
 
 const environmentTokenKey = "OAUTH_TOKEN"
+
 const dockerNamesURL = "https://frightanic.com/goodies_content/docker-names.php"
 const apiBaseURL = "https://api.github.com/repos"
 const githubURL = "https://github.com/%s/%s/compare/%s...%s"
@@ -81,15 +83,16 @@ func main() {
 
 	var userInput userInputs
 	flag.StringVar(&userInput.user, "user", "idnowgmbh", "The User / Owner of the repository")
-	flag.StringVar(&userInput.source, "source", "master", "The source branch/tag to create the new tag")
+	flag.StringVar(&userInput.source, "source", "master", "The source branch/tag to create the new tag.")
 	flag.StringVar(&userInput.fallbackBranch, "fallback-branch", "master", "The fallback branch to create the TAG on if the source branch does not exist in the repository.")
-	flag.IntVar(&userInput.timeout, "timeout", 5, "The Timeout for Github API Calls")
-	flag.StringVar(&userInput.supportBranchName, "support-branch-name", "", "The name of the support branch to create if source branch is a tag")
+	flag.IntVar(&userInput.timeout, "timeout", 5, "The Timeout for Github API Calls.")
+	flag.StringVar(&userInput.supportBranchName, "support-branch-name", "", "The name of the support branch to create if source branch is a tag.")
 
 	flag.StringVar(&userInput.tag, "tag", "", "The tag to create.")
-	flag.StringVar(&userInput.releaseName, "release-name", "", "The name of the Release")
-	flag.StringVar(&userInput.previousTag, "previous-tag", "", "The previous tag to use in the message")
-	flag.BoolVar(&userInput.preRelease, "pre-release", true, "If this is a pre-release, use -pre-release=false to change")
+	flag.StringVar(&userInput.releaseName, "release-name", "", "The name of the Release.")
+	flag.StringVar(&userInput.previousTag, "previous-tag", "", "The previous tag to use in the message.")
+	flag.BoolVar(&userInput.preRelease, "pre-release", true, "If this is a pre-release, use -pre-release=false to change.")
+	flag.StringVar(&userInput.extraBody, "extra-body", "", "Can be used to add an extra body parameter.")
 
 	flag.Usage = usage
 	flag.Parse()
@@ -126,7 +129,7 @@ func usage() {
 	executableName := os.Args[0]
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\n%s is an opinionated implementation of some Github APIs that can be used to create release tags for multiple projects\n", executableName)
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source master -tag v0.0.2 -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
-	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source support/v0.0.x -tag v0.0.3 -fallback-branch master -previous-tag v0.0.1 -release-name Duke -pre-release=false java-design-patterns TasteOfJavaEE7", executableName)
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source support/v0.0.x -tag v0.0.3 -fallback-branch master -previous-tag v0.0.1 -release-name Duke -pre-release=false -extra-body deploy=true java-design-patterns TasteOfJavaEE7", executableName)
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nUsage: %s -user comdotlinux -source v0.0.1 -tag v0.0.2-RC.1 -support-branch-name support/v0.0.x -previous-tag v0.0.1 java-design-patterns TasteOfJavaEE7", executableName)
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "\nWhen -source is a TAG -support-branch-name is mandatory. \n")
 	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "An environment variable with the name %s is mandatory for all actions!\nSee https://developer.github.com/v3/#oauth2-token-sent-in-a-header to get one.\n\n", environmentTokenKey)
@@ -203,8 +206,8 @@ func checkBranch(client *http.Client, userInput userInputs, project string, proj
 					log.Fatalf("Could not create Request for creating branch. %v", err)
 				}
 
-				addAuthAndAcceptHeader(req)
-				req.Header.Add(http.CanonicalHeaderKey("Content-Type"), "application/json")
+				addAuthAndAcceptHeader(req.Header.Add)
+				addContentTypeJson(req.Header.Add)
 				res, err := client.Do(req)
 				if err != nil {
 					log.Fatalf("Error in creating the branch : %v", err)
@@ -263,7 +266,7 @@ func doGet(client *http.Client, url string) (*http.Response, error) {
 		return nil, err
 	}
 
-	addAuthAndAcceptHeader(req)
+	addAuthAndAcceptHeader(req.Header.Add)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -274,17 +277,28 @@ func doGet(client *http.Client, url string) (*http.Response, error) {
 	return res, nil
 }
 
-func addAuthAndAcceptHeader(request *http.Request) {
-	request.Header.Add(http.CanonicalHeaderKey("Authorization"), fmt.Sprintf("token %s", os.Getenv(environmentTokenKey)))
-	request.Header.Add(http.CanonicalHeaderKey("Accept"), "application/vnd.github.v3+json")
+type Add func(key, value string)
+
+func addContentTypeJson(add Add) {
+	add(http.CanonicalHeaderKey("Content-Type"), "application/json")
+}
+
+func addAuthAndAcceptHeader(add Add) {
+	add(http.CanonicalHeaderKey("Authorization"), fmt.Sprintf("token %s", os.Getenv(environmentTokenKey)))
+	add(http.CanonicalHeaderKey("Accept"), "application/vnd.github.v3+json")
 }
 
 func createRelease(client *http.Client, userInput userInputs, targetBranch string, project string, projectAPIBaseURL string) string {
 	previousComparePoint := targetBranch
+
 	if !isEmpty(userInput.previousTag) {
 		previousComparePoint = userInput.previousTag
 	}
 	releaseCompareBody := fmt.Sprintf(githubURL, userInput.user, project, previousComparePoint, userInput.tag)
+
+	if !isEmpty(userInput.extraBody) {
+		releaseCompareBody += fmt.Sprintf("\n%s\n", userInput.extraBody)
+	}
 	releaseRequest := release{
 		TagName:      userInput.tag,
 		ReleaseName:  userInput.releaseName,
@@ -309,8 +323,8 @@ func createRelease(client *http.Client, userInput userInputs, targetBranch strin
 		log.Fatalf("Could not create Body Json Bytes, from release object. %v", err)
 	}
 
-	addAuthAndAcceptHeader(req)
-	req.Header.Add(http.CanonicalHeaderKey("Content-Type"), "application/json")
+	addAuthAndAcceptHeader(req.Header.Add)
+	addContentTypeJson(req.Header.Add)
 	res, err := client.Do(req)
 	if err != nil {
 		log.Fatalf("Create release Failed, %v", err)
